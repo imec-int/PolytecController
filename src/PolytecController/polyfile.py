@@ -217,91 +217,6 @@ class PolyFile:
             self.file.Close()
         return
     
-    def getPointData(self, channelname:str, signalname:str, displayname:str, frame:int=0,get_only_enabled:bool=True)->Tuple[np.ndarray,np.ndarray]:
-        """
-        Gets original or user defined data from a polytec file.
-        
-        .. deprecated:: 
-            This function is deprecated. Use `get_point_data()` instead, which uses the Polytec
-             implementation and ensures full functionality.
-        
-        :param channelname: The name of the channel, e.g. 'Vib' or 'Ref1' or 'Vib & Ref1' or 'Vib X' or 'Vib Y' or 'Vib Z'.
-        :type channelname: str
-        :param signalname: The name of the signal, e.g. 'Velocity' or 'Displacement'.
-        :type signalname: str
-        :param displayname: The name of the display, e.g. 'Real' or 'Magnitude' or 'Samples'.
-        If the display name is 'Real & Imag.' the data is returned as complex values.
-        :type displayname: str
-        
-        :param frame: The frame number of the data. For data acquired in MultiFrame mode, 0 is the averaged frame and 1-n are the other frames.
-        For user defined datasets the frame number is in the range 1-n where n is the number of frames in the user defined dataset.
-        For all other data, use frame number 0.
-        :type frame: int
-
-        :param get_only_enabled: only relevant for svd files.
-        :type get_only_enabled: bool
-
-        :returns: x, the x axis values of the data.
-        :rtype: list
-        :returns: y, the data. Columns correspond to the x-axis, rows to the point index.
-        For point = 0: rows for points that have no data are set to zeros.
-        :rtype: list
-        :returns: usd, a struct describing the signal.
-        :rtype: dict
-        """
-        
-        warnings.warn(
-            "getPointData() is deprecated. Use get_point_data() instead (function from Polytec)",
-            DeprecationWarning,
-            stacklevel=2
-        )
-        file = self.file
-        filetype=self.version.file_id_string
-        pointdomains = file.GetPointDomains()
-        pointdomain = pointdomains.Item(self.domain)
-        assert pointdomain.Channels.Exists(channelname), f"The channelname {channelname} does not exist in {self.filepath}"
-        channel = pointdomain.Channels.Item(channelname)
-        assert channel.Signals.Exists(signalname),f"The signalname {signalname} does not exist in {self.filepath}"
-        signal = channel.Signals.Item(signalname)
-        assert signal.Displays.Exists(displayname),f"The displayname {displayname} does not exist in {self.filepath}"
-        display = signal.Displays.Item(displayname)
-        
-        signalDesc = SignalDesc.from_com(signal.Description)
-        #print(f"{signalDesc.xaxis.unit=} {signalDesc.yaxis.unit=}")
-        xaxis=signalDesc.xaxis
-        if signalDesc.domain_type==PTCDomainType["ptcDomain3rdOctave"]:
-            x=np.zeros(xaxis.count)
-            for i in range(xaxis.count):
-                x[i]=xaxis.get_mid_x(i-1)
-        else:
-            x=np.linspace(xaxis.min,xaxis.max,xaxis.count)
-        datapoints = pointdomain.DataPoints 
-        y = []
-        for i in range(1, datapoints.Count + 1):
-            datapoint = datapoints.Item(i)
-            if filetype=="ptcFileIDPSVFile": #svd file
-                is_disabled=datapoint.MeasPoint.ScanStatus==PTCScanStatus["ptcScanStatusDisabled"]
-            elif filetype=="ptcFileIDVibSoftFile":#pvb file does not have measpoint attribute
-                is_disabled=False
-                get_only_enabled=False
-            if (get_only_enabled and not is_disabled) or not get_only_enabled:
-                ytemp = np.array(datapoint.GetData(display, frame), dtype=float) # GetData returns a tuple of floats
-                if len(ytemp) > 0:
-                    y.append(ytemp)
-                elif len(ytemp)==0:
-                    y.append(np.zeros(len(x)))
-        y = np.vstack(y)
-
-        #When you ask for a display with two types of data (Real & Imaginary, Magnitude & Phase), the data returned will be interleaved.
-        if display.Type in [PTCDisplayType["ptcDisplayMagPhase"],PTCDisplayType["ptcDisplayMagPhaseRad"],
-                            PTCDisplayType["ptcDisplayMagDbPhase"],PTCDisplayType["ptcDisplayMagDbPhaseRad"]]:
-            raise RuntimeError("uninterleaving of this data type not implemented yet")
-        if signal.Description.Complex and display.Type==PTCDisplayType["ptcDisplayRealImag"]:
-            real,imag=ut.uninterleave_data(y)
-            y=real+1j*imag
-        assert len(x)==y.shape[1], f"x and y data lengths don't match x:{x.shape}, y:{y.shape}"
-        return x, y
-    
     def get_point_data(self, domain_name: str, channel_name: str, signal_name: str, display_name: str,
                       point_index: int=-1, frame: int = 0) -> Tuple[np.ndarray, np.ndarray, USD]:
         """
@@ -389,6 +304,23 @@ class PolyFile:
 
         return np.array(x), np.array(y), usd
     
+    def find_disabled_points_indexes(self)->np.ndarray:
+        """
+        Return a an array of boolean values indicating which points are disabled.
+        True means the point is disabled.
+        """
+        if filetype=="ptcFileIDVibSoftFile":#does not make sense to disable points in pvb files since they only contain one point.
+            raise RuntimeError("Function not available for pvb files")
+        file = self.file
+        filetype=self.version.file_id_string
+        pointdomains = file.GetPointDomains()
+        pointdomain = pointdomains.Item(self.domain)
+        datapoints = pointdomain.DataPoints
+        disabled=np.zeros(datapoints.Count,dtype=bool)
+        for i in range(1, datapoints.Count + 1):
+            datapoint = datapoints.Item(i)
+            disabled[i-1]=polytec_common.find_statuses_matches([datapoint.MeasPoint.ScanStatus],["ptcScanStatusDisabled"])[0]
+        return disabled
 
 class PolySettings(PolyFile):
     def __init__(self, set_path):
