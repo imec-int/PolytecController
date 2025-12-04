@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-PolytecController = { git = "https://github.imec.be/MMICRO/PolytecController.git", branch = "main" }
+PolytecController = { git = "https://github.com/imec-int/PolytecController.git", branch = "main" }
 
 ```
 2. Run ```uv sync``` to update all the dependencies.
