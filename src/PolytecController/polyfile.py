@@ -160,6 +160,24 @@ class PolyFile:
         return polytec_common.get_scanpoints_statuses(self.infos)
 
     def plot_scanpoints(self,**kwargs)->None:
+        """
+        Plot the scanpoints stored in the svd file on the given ax.
+        kwargs:
+            ax: matplotlib axis to plot on. If None, a new figure and axis will be created.
+            savepath: str or None. If not None, the figure will be saved to this path.
+            category: str. Category of scan points to plot. Options: All, Enabled, Disabled, Interpolated, Overrange, Valid.
+            label_scanpoints: bool. If True, each scanpoint will be labeled with its index.
+            label_scanstatus: bool. If True, each scanpoint will be labeled with its scan status code.
+            title: str. Title of the plot.
+            ref_frame: str. Reference frame for the coordinates. Options: raw, video, pixel.
+            legend: bool. If True, a legend will be added to the plot.
+            add_border: bool. If True, a colored border will be added to the plot based on the worst status of the points.
+            border_width: int. Width of the border if add_border is True.
+            fontsize_title: int. Font size of the title.
+            s: int. Size of the scatter points.
+            label_scanpoint_fontsize: int. Font size of the scanpoint labels.
+            cropbox: tuple or None. If not None, should be (left, upper, right, lower) bounds of the cropped image.
+        """
         options = {"ax": None,"savepath": None,"category":"All","label_scanpoints": False,"label_scanstatus":False,
                    "title":self.filename,"ref_frame":"pixel","legend":False,"add_border":False,"border_width":20,"fontsize_title":32,
                    "s":10,"label_scanpoint_fontsize":12,"cropbox":None}
@@ -193,10 +211,8 @@ class PolyFile:
         if options['add_border']:
             if "red" in colors:
                 ut.make_border(ax, color="red", border_width=options["border_width"])
-                pass
             elif "orange" in colors: #yellow does not have enough contrast
                 ut.make_border(ax, color="orange", border_width=options["border_width"])
-                pass
 
         if options["legend"]:
             ax.legend()
