@@ -33,11 +33,8 @@ def extract_pictures(svd_folder:str,savefolder:str,**kwargs):
     options.update(kwargs)
     files=[file for file in os.listdir(svd_folder) if file.endswith(".svd")]
     for filename in tqdm(files,unit="file"):
-        name, extension = os.path.splitext(filename)
-        filepath=os.path.join(svd_folder,filename)
-        savepath=os.path.join(savefolder,f"{name}.png")
-        
-        with Svd(filepath) as svd:
+        savepath=os.path.join(savefolder,ut.change_file_extension(filename,"png"))
+        with Svd(os.path.join(svd_folder,filename)) as svd:
             if options["clean_image"]:# Extract clean image without any overlays, useful for computer vision
                 image=svd.get_image(cropbox=None)  
                 ut.make_dir(savepath)

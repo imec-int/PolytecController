@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import PIL.Image
 from typing import Tuple
 from packaging import version
+from typing import List
 
 from .enumerations import (
     PTCDomainType,
@@ -320,24 +321,6 @@ class PolyFile:
 
         return np.array(x), np.array(y), usd
     
-    def find_disabled_points_indexes(self)->np.ndarray:
-        """
-        Return a an array of boolean values indicating which points are disabled.
-        True means the point is disabled.
-        """
-        if filetype=="ptcFileIDVibSoftFile":#does not make sense to disable points in pvb files since they only contain one point.
-            raise RuntimeError("Function not available for pvb files")
-        file = self.file
-        filetype=self.version.file_id_string
-        pointdomains = file.GetPointDomains()
-        pointdomain = pointdomains.Item(self.domain)
-        datapoints = pointdomain.DataPoints
-        disabled=np.zeros(datapoints.Count,dtype=bool)
-        for i in range(1, datapoints.Count + 1):
-            datapoint = datapoints.Item(i)
-            disabled[i-1]=polytec_common.find_statuses_matches([datapoint.MeasPoint.ScanStatus],["ptcScanStatusDisabled"])[0]
-        return disabled
-
 class PolySettings(PolyFile):
     def __init__(self, set_path):
         super().__init__(set_path)
@@ -384,7 +367,7 @@ class Svd(PolyFile):
             self.npoints = self.infos.meas_points.count #number of measurement points
             self.domain=self.get_domain() #FFT or time
 
-    def get_image(self,cropbox=None)->np.ndarray:
+    def get_image(self,cropbox:List[int]=None)->np.ndarray:
         """
         Get the image saved in the svd file. It can then be shown with ax.imshow(image)
         cropbox:optional left, upper, right, lower bound of the cropped image we want
@@ -426,4 +409,3 @@ class Svd(PolyFile):
     
     def get_scanpoints_status_statistics(self):
         return polytec_common.get_scanpoints_status_statistics(self.infos)
-    

@@ -74,6 +74,7 @@ class Polytec_software():
         while(self.app.Acquisition.State !=PTCAcqState["ptcAcqStateStopped"]):
             time.sleep(1)
         return
+    
     def save_current_settings(self,savepath:str):
         savepath=ut.relative_to_absolute(savepath)
         self.app.Settings.Save(savepath)
@@ -104,6 +105,12 @@ class Psv(Polytec_software): #should work for MSV as well.
         ut.make_dir(savepath)
         self.app.Acquisition.ScanFileName=savepath
         self.app.Acquisition.ScanEx(scanMode,scanCaps)
+        return
+    
+    def set_laser_intensity(infos,laser_intensity:int):
+        raise NotImplementedError("Not possible to do in PSV10.3, maybe in PSV10.4 when it is released.")
+        scanhead_control=infos.scanHeadDevicesInfo.scanHeadDevices[0].scanHeadControl
+        scanhead_control.WriteLaserIntensityData(laser_intensity)
         return
     
     def export_snapshot(self,savepath:str):

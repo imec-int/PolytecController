@@ -159,9 +159,3 @@ def transform_scanpoints_for_cropped_image(scanpoints,cropbox):
     left, upper, right, lower = cropbox # Extract the crop parameters
     transformed_scanpoints = [[x - left, y - lower] for x, y in scanpoints]
     return np.array(transformed_scanpoints)
-
-def set_laser_intensity(infos,laser_intensity:int):
-    raise NotImplementedError("Not possible to do in PSV10.3, maybe in PSV10.4 when it is released.")
-    scanhead_control=infos.scanHeadDevicesInfo.scanHeadDevices[0].scanHeadControl
-    scanhead_control.WriteLaserIntensityData(laser_intensity)
-    return
