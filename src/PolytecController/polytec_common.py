@@ -9,6 +9,16 @@ from typing import List,Tuple, Any
 from .enumerations import PTCScanStatus
 from .utils import find_common_string
 
+#This is quite conservative, an overrange or interpolated scanpoint can still be valid, but it is better to be safe than sorry.
+INVALID_STATUSES_CONSERVATIVE=["ptcScanStatusOverrange","pctScanStatusInterpolate","ptcScanStatusInterpolationFailed",
+                      "ptcScanStatusInvalidated","ptcScanStatusVideoTriangulationFailed","ptcScanStatusNone",
+                      "ptcScanStatusNotMeasured","ptcScanStatusDisabled"]
+
+INVALID_STATUSES_RELAXED=["ptcScanStatusInterpolationFailed",
+                      "ptcScanStatusInvalidated","ptcScanStatusVideoTriangulationFailed","ptcScanStatusNone",
+                      "ptcScanStatusNotMeasured","ptcScanStatusDisabled"]
+
+
 def get_scanpoints_status_statistics(infos):
     """
     Return a Counter with the number of scanpoints for each status number
@@ -46,16 +56,14 @@ def find_statuses_matches(statuses:List[int],target_statuses:List[str])->np.ndar
         results[i]=is_match
     return results
 
-def check_measurement_validity(statuses:List[int])->np.ndarray[Any, np.dtype[np.bool_]]:
+def check_measurement_validity(statuses:List[int],invalid_statuses:List[str]=INVALID_STATUSES_CONSERVATIVE)->np.ndarray[Any, np.dtype[np.bool_]]:
     """
     Return true if the status is not invalid
     Remember that one status may mean multiple things, eg: 516 means ptcScanStatusInterpolate AND ptcScanStatusOverrange
     eg.: check_measurement_validity([1,516])-->[True,False]
     """
-    INVALID_STATUSES=["ptcScanStatusOverrange","pctScanStatusInterpolate","ptcScanStatusInterpolationFailed",
-                      "ptcScanStatusInvalidated","ptcScanStatusVideoTriangulationFailed","ptcScanStatusNone",
-                      "ptcScanStatusNotMeasured","ptcScanStatusDisabled"]
-    return ~find_statuses_matches(statuses=statuses,target_statuses=INVALID_STATUSES)
+    
+    return ~find_statuses_matches(statuses=statuses,target_statuses=invalid_statuses)
 
 def get_scanpoints_statuses(infos)->List[int]:
     """
