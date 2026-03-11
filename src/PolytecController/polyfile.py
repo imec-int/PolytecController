@@ -348,6 +348,30 @@ class PolySettings(PolyFile):
             new_sett.file.Save()
         self.file.Open(self.filepath)
         return
+
+    def copy_laser_alignment(self,donor_sett_path:str)->None:
+        """
+        copy the laser alignment from the donor settings file to this settings file.
+        The donor file will not be modified.
+        """
+        self.close_file() #cannot have 2 svd files open at same time
+        # Open donor, extract points
+        with PolySettings(donor_sett_path) as donor_sett:
+            donor_points = donor_sett.file.Infos.Alignments.Alignments2D(1).Align2DPoints
+            donor_scanhead=donor_sett.file.Infos.ScanHeadDevicesInfo.ScanHeadDevices(1).Scanner
+        # Open target, clear points
+        #Not working for some reason, but points will be overwritten in the next step anyway so should not cause any issue
+        #with PolySettings(self.filepath) as target_sett:
+        #    target_sett.file.ReadOnly = False
+        #    target_sett.file.Infos.Alignments.Alignments2D(1).Align2DPoints.Clear() 
+        #    target_sett.file.Save()
+        #recompute points
+        with PolySettings(self.filepath) as target_sett:
+            target_sett.file.ReadOnly = False
+            target_sett.file.Infos.Alignments.Alignments2D(1).Calculate(donor_points,donor_scanhead,True)
+            target_sett.file.Save()
+        self.file.Open(self.filepath)
+        return
         
 class Pvd(PolyFile):
     def __init__(self, pvd_path:str):

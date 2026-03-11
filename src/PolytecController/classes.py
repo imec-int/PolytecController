@@ -73,7 +73,16 @@ class BaseClass:
 
         info_str += '    ' * indent + ")"
         return info_str
-
+    
+    def __eq__(self, other):
+        """
+        Check if all attributes of self and other are equal.
+        Returns True if all attributes match, False otherwise.
+        """
+        if not isinstance(other, self.__class__):
+            return False
+        return vars(self) == vars(other)
+    
     def _format_value(self, value, indent):
         """Determine how to format the value based on its type."""
         if isinstance(value, BaseClass):

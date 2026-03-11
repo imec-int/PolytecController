@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from PolytecController.polyfile import Pvd, Svd, PolySettings
 import PolytecController.utils as ut
 from PolytecController.polytec_common import translate_status
+from PolytecController.classes import Alignment2D
 
 
 #TEST_SVD=os.path.join("tests","random_polyfiles","msa600_measurement_results.svd") #add your own.
@@ -125,7 +126,45 @@ def test_get_laserPower():
         #print(f'{vibProp.vibControllerSettings.sensorHeadSettingsCollection[0].dimmer=}')
     return
 
+
+def test_copy_laser_alignment():
+    #Tricky because only one settings file can be opened at a time.
+    target_settings=r"tests\Settings.set"
+    donor_settings=r"tests\settings_2.set" 
+    with PolySettings(donor_settings) as donor_sett:
+        donor_alignment=donor_sett.infos.alignments.alignments_2d[0]
+        print("donor alignment:", donor_alignment)
+        #for i,point in enumerate(donor_alignment.align2DPoints):
+        #    if i>=2: #only print the first 3 points to avoid cluttering the output
+        #        break
+        #    print("Donor laser alignment point:", point)
+    with PolySettings(target_settings) as target_sett:
+        target_original_alignment=target_sett.infos.alignments.alignments_2d[0]
+        #for i,point in enumerate(target_original_alignment.align2DPoints):
+        #    if i>=2:
+        #        break
+        #    print("Target laser alignment point before copying:", point)
+        
+        print("target_original_alignment:", target_original_alignment)
+    print("Copying laser alignment from donor to target settings file...")
+    with PolySettings(target_settings) as target_sett:
+        target_sett.copy_laser_alignment(donor_settings)
+    
+    with PolySettings(target_settings) as target_sett:
+        target_new_alignment=target_sett.infos.alignments.alignments_2d[0]
+        #for i,point in enumerate(target_new_alignment.align2DPoints):
+        #    if i>=2:
+        #        break
+        #    print("Target laser alignment point after copying:", point)
+        print("target_new_alignment:", target_new_alignment)
+    assert donor_alignment==target_new_alignment, "Laser alignment was not copied correctly"
+    print("Laser alignment copied successfully.")
+
+    return
+
 if __name__=="__main__":
+    test_copy_laser_alignment()
+    assert False
     test_get_laserPower()
     test_version_object()
     #test_get_laser_intensity()
