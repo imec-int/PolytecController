@@ -1,3 +1,9 @@
+# Disclaimer
+
+- **This software is NOT an official product of, endorsed by, affiliated with, or supported by Polytec GmbH or any of its subsidiaries.** It is an independent, community-maintained, open-source project developed for personal and research use.
+-  **No warranty:** This software is provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement.
+- **No official support:** Polytec GmbH bears no responsibility for this project. Do not contact Polytec support for issues related to this package.
+- **Use at your own risk:** While the authors have not experienced any issues on their end, they cannot guarantee the same for others. The authors and contributors are not liable for any damage to equipment, data loss, voided warranties, or any other consequences arising from the use of this software.
 
 # Dependencies
  - Make sure polytec file access is installed on your computer. You can get it through [polytec update](https://www.polytec.com/int/vibrometry/products/software/polytec-update). This will allow you to use the functions defined in the polyfile.py file of this repository, which are useful to extract data from .svd or .pvb files.
